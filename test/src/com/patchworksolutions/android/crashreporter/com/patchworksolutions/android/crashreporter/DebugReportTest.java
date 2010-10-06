@@ -4,7 +4,6 @@ import java.text.DecimalFormat;
 
 import com.patchworksolutions.android.crashreporter.tests.CrashReporterTestActivity;
 
-import android.app.Activity;
 import android.test.ActivityInstrumentationTestCase2;
 
 public class DebugReportTest extends ActivityInstrumentationTestCase2 <CrashReporterTestActivity>{
@@ -47,12 +46,13 @@ public class DebugReportTest extends ActivityInstrumentationTestCase2 <CrashRepo
     
     public void testGetDebugEnvironment() throws Exception {
     	String result = DebugReportUtil.getDebugEnvironment(getActivity());
-    	//System.out.println(result);
+    	assertTrue(result != null);
     	//TODO: verify!
     }
     
     private class TestThrowable extends Throwable {
-    	String mStr = "";
+		private static final long serialVersionUID = 1L;
+		String mStr = "";
     	
     	public TestThrowable(String str) {
     		super();

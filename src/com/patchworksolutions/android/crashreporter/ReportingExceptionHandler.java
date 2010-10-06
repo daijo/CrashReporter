@@ -1,38 +1,8 @@
 package com.patchworksolutions.android.crashreporter;
 
-import java.io.BufferedReader;
-
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.lang.reflect.Field;
-import java.security.InvalidKeyException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.DESKeySpec;
-
-import net.iharder.Base64.Base64;
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.Build;
 
 /**
  * 
@@ -51,7 +21,6 @@ public class ReportingExceptionHandler implements UncaughtExceptionHandler, Runn
     private Thread.UncaughtExceptionHandler defaultUEH;
     private Activity app = null;
     private MessageTemplate template;
-    private SecretKey secretKey = null;
 
     public ReportingExceptionHandler(Activity aApp, MessageTemplate template) {
         defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
