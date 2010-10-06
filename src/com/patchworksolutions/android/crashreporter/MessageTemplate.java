@@ -7,7 +7,7 @@ package com.patchworksolutions.android.crashreporter;
  */
 public class MessageTemplate {
 
-    private String exceptionReportFilename = "postmortem.trace";
+    
 
     private String msgSubjectTag = "Exception Report"; // "app title + this tag"
                                                                         // =
@@ -42,10 +42,6 @@ public class MessageTemplate {
         this.msgSentTo = msgSentTo;
         this.secretDesKeyData = secretDesKeyData;
 	}
-
-	public String getExceptionReportFilename() {
-        return exceptionReportFilename;
-    }
 	
     public String getMsgSubjectTag() {
         return msgSubjectTag;

@@ -53,89 +53,25 @@ public class ReportingExceptionHandler implements UncaughtExceptionHandler, Runn
     private MessageTemplate template;
     private SecretKey secretKey = null;
 
-    public ReportingExceptionHandler(Activity aApp, MessageTemplate settings) {
+    public ReportingExceptionHandler(Activity aApp, MessageTemplate template) {
         defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
         app = aApp;
-        this.template = settings;
-
-        byte[] desKeyData = settings.getSecretDesKeyData();
-        if(desKeyData != null) {
-        	secretKey = DesEncrypter.buildSecretKey(desKeyData);
-        }
+        this.template = template;
     }
 
     public void uncaughtException(Thread t, Throwable e) {
         submit(e);
-        // do not forget to pass this exception through up the chain
         defaultUEH.uncaughtException(t, e);
     }
 
-    protected void saveDebugReport(String report) {
-        // save report to file
-        try {
-            FileOutputStream file = app.openFileOutput(
-                    template.getExceptionReportFilename(), Context.MODE_PRIVATE);
-            file.write(report.getBytes());
-            file.close();
-        } catch (IOException ioe) {
-            // error during error report needs to be ignored, do not wish to
-            // start infinite loop
-        }
-    }
-
-    public void sendDebugReportToAuthor() {
-        String currentLine = "";
-        String report = "";
-        try {
-            BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(app
-                            .openFileInput(template.getExceptionReportFilename())));
-            while ((currentLine = reader.readLine()) != null) {
-                report += currentLine + "\n";
-            }
-            if (sendDebugReportToAuthor(report)) {
-                app.deleteFile(template.getExceptionReportFilename());
-            }
-        } catch (FileNotFoundException eFnf) {
-            // nothing to do
-        } catch (IOException eIo) {
-            // not going to report
-        }
-    }
-
-    public Boolean sendDebugReportToAuthor(String report) {
-        if (report != null) {
-            Intent intent = new Intent(Intent.ACTION_SEND);
-            String subject = app.getTitle() + " " + template.getMsgSubjectTag();
-            String body = "\n" + template.getMsgBody() + "\n\n" + report + "\n\n";
-            if(secretKey != null) {
-            	body = new DesEncrypter(secretKey).encrypt(body);
-            }
-            intent.putExtra(Intent.EXTRA_EMAIL, new String[] { template.getMsgSendTo() });
-            intent.putExtra(Intent.EXTRA_TEXT, body);
-            intent.putExtra(Intent.EXTRA_SUBJECT, subject);
-            intent.setType("message/rfc822");
-            Boolean hasSendRecipients = (app.getPackageManager()
-                    .queryIntentActivities(intent, 0).size() > 0);
-            if (hasSendRecipients) {
-                app.startActivity(intent);
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return true;
-        }
-    }
-
     public void run() {
-        sendDebugReportToAuthor();
+    	DebugReport report = DebugReport.retrieve(app);
+    	report.sendDebugReport(template);
     }
 
     public void submit(Throwable e) {
-        String theErrReport = DebugReport.getDebugReport(e, app);
-        saveDebugReport(theErrReport);
-        // try to send file contents via email (need to do so via the UI thread)
+    	DebugReport report = DebugReport.create(e, app);
+    	report.saveDebugReport();
         app.runOnUiThread(this);
     }
 

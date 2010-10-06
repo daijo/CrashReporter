@@ -1,155 +1,91 @@
 package com.patchworksolutions.android.crashreporter;
 
-import java.lang.reflect.Field;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+import javax.crypto.SecretKey;
 
 import android.app.Activity;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.Build;
+import android.content.Context;
+import android.content.Intent;
 
 public class DebugReport {
+	private static final String EXCEPTION_REPORT_FILENAME = "postmortem.trace";
+	private Activity mApp;
+	private String mReport = "";
 
-    public static String getDebugReport(Throwable thrown, Activity app) {
-        NumberFormat formatter = new DecimalFormat("#0.");
-        String report = "REPORT\n";
-
-        report += getDebugDescription(thrown, app); // tested
-
-        report += getDebugStackTrace(thrown, formatter); // tested
-        
-        report += getDebugMD5Hash(thrown); // tested
-
-        report += getDebugCause(thrown, formatter); // tested
-
-        report += getDebugEnvironment(app);
-
-        report += "END REPORT";
-        return report;
-    }
-
-	public static String getDebugDescription(Throwable thrown, Activity app) {
-		String result = app.getPackageName()
-                + " generated the following exception:\n";
-		result += thrown.toString() + "\n\n";
-		return result;
+	private DebugReport(Throwable thrown, Activity app) {
+		this.mApp = app;
+		this.mReport = DebugReportUtil.getDebugReport(thrown, mApp);
 	}
 
-	public static String getDebugCause(Throwable thrown, NumberFormat formatter) {
-		StackTraceElement[] stackTrace;
-		// if the exception was thrown in a background thread inside
-        // AsyncTask, then the actual exception can be found with getCause
-        Throwable cause = thrown.getCause();
-        String result = "";
-        if (cause != null) {
-        	result += "CAUSE\n";
-        	result += cause.toString() + "\n\n";
-            stackTrace = cause.getStackTrace();
-            if(stackTrace != null) {
-            	for (int i = 0; i < stackTrace.length; i++) {
-            		result += formatter.format(i + 1) + "\t"
-            		+ stackTrace[i].toString() + "\n";
-            	}// for
+	private DebugReport(Activity app) {
+		this.mApp = app;
+        String currentLine = "";
+        try {
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(mApp.openFileInput(EXCEPTION_REPORT_FILENAME)));
+            while ((currentLine = reader.readLine()) != null) {
+                mReport += currentLine + "\n";
             }
-            result += "END CAUSE\n\n";
-        }// if
-		return result;
+        } catch (FileNotFoundException eFnf) {}
+        catch (IOException eIo) {}
 	}
 
-	public static String getDebugMD5Hash(Throwable thrown) {
-		String result = "MD5_HASH\n";
-		result += md5(thrown.toString() + getUnformatedStackTrace(thrown.getStackTrace())) + "\n";
-		result += "END MD5_HASH\n\n";
-		return result;
-	}
-
-	public static String getDebugStackTrace(Throwable thrown, NumberFormat formatter) {
-		StackTraceElement[] stackTrace = thrown.getStackTrace();
-		String result = "STACK_TRACE\n";
-		if (stackTrace != null && stackTrace.length > 0) {
-            for (int i = 0; i < stackTrace.length; i++) {
-            	result += formatter.format(i + 1) + "\t"
-                        + stackTrace[i].toString() + "\n";
-            }// for   
-        }
-		result += "END STACK_TRACE\n\n";
-		return result;
-	}
-
-	public static String getDebugEnvironment(Activity app) {
-		String result = "";
-		// app environment
-        PackageManager pm = app.getPackageManager();
-        PackageInfo pi;
+	public void saveDebugReport() {
         try {
-            pi = pm.getPackageInfo(app.getPackageName(), 0);
-        } catch (NameNotFoundException eNnf) {
-            // doubt this will ever run since we want info about our own package
-            pi = new PackageInfo();
-            pi.versionName = "unknown";
-            pi.versionCode = 69;
-        }
-        Date theDate = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd_HH.mm.ss_zzz");
-        result += "ENV\n";
-        result += "Time=" + sdf.format(theDate) + "\n";
-        result += "Device=" + Build.FINGERPRINT + "\n";
-        try {
-            Field manufacturer = Build.class.getField("MANUFACTURER");
-            result += "Make=" + manufacturer.get(null) + "\n";
-        } catch (SecurityException e) {
-        } catch (NoSuchFieldException e) {
-        } catch (IllegalArgumentException e) {
-        } catch (IllegalAccessException e) {
-        }
-        result += "Model=" + Build.MODEL + "\n";
-        result += "Product=" + Build.PRODUCT + "\n";
-        result += "App=" + app.getPackageName() + ", version "
-                + pi.versionName + " (build " + pi.versionCode + ")\n";
-        result += "Locale="
-                + app.getResources().getConfiguration().locale
-                        .getDisplayName() + "\n";
-        result += "SDK: " + Build.VERSION.SDK + "\n";
-        result += "Release: " + Build.VERSION.RELEASE + "\n";
-        result += "Incremental: " + Build.VERSION.INCREMENTAL + "\n";
-        result += "END ENV\n\n";
-		return result;
-	}	
-	
-	private static String getUnformatedStackTrace(StackTraceElement[] stackTrace) {
-		String unformattedStackTrace = ""; 
-        if (stackTrace != null && stackTrace.length > 0) {
-            for (int i = 0; i < stackTrace.length; i++) {
-                unformattedStackTrace += stackTrace[i].toString();
-            }// for
-        }
-		return unformattedStackTrace;
+            FileOutputStream file = mApp.openFileOutput(
+            		EXCEPTION_REPORT_FILENAME, Context.MODE_PRIVATE);
+            file.write(mReport.getBytes());
+            file.close();
+        } catch (IOException ioe) {}
 	}
 	
-    private static String md5(String s) {
-        try {
-            // Create MD5 Hash
-            MessageDigest digest = java.security.MessageDigest
-                    .getInstance("MD5");
-            digest.update(s.getBytes());
-            byte messageDigest[] = digest.digest();
-
-            // Create Hex String
-            StringBuffer hexString = new StringBuffer();
-            for (int i = 0; i < messageDigest.length; i++)
-                hexString.append(Integer.toHexString(0xFF & messageDigest[i]));
-            return hexString.toString();
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+	public void sendDebugReport(MessageTemplate template) {
+        if (sendDebugReportToAuthor(template)) {
+            mApp.deleteFile(EXCEPTION_REPORT_FILENAME);
         }
-        return "";
-    }    
-   
+	}
+	
+    private Boolean sendDebugReportToAuthor(MessageTemplate template) {
+        if (mReport != null && mReport.length() > 0) {
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            String subject = mApp.getTitle() + " " + template.getMsgSubjectTag();
+            String body = "\n" + template.getMsgBody() + "\n\n" + mReport + "\n\n";
+            
+            byte[] desKeyData = template.getSecretDesKeyData();
+            if(desKeyData != null) {
+            	SecretKey secretKey = DesEncrypter.buildSecretKey(desKeyData);
+            	if(secretKey != null) {
+            		body = new DesEncrypter(secretKey).encrypt(body);
+            	}
+            }
+            intent.putExtra(Intent.EXTRA_EMAIL, new String[] { template.getMsgSendTo() });
+            intent.putExtra(Intent.EXTRA_TEXT, body);
+            intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+            intent.setType("message/rfc822");
+            Boolean hasSendRecipients = (mApp.getPackageManager()
+                    .queryIntentActivities(intent, 0).size() > 0);
+            if (hasSendRecipients) {
+                mApp.startActivity(intent);
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+	
+	public static DebugReport create(Throwable thrown, Activity app) {
+		return new DebugReport(thrown, app);
+	}
+	
+	public static DebugReport retrieve(Activity app) {
+		return new DebugReport(app);
+	}
+	
 }

@@ -1,0 +1,21 @@
+CrashReporter
+=============
+An uncaught exceptions handler for Android capable of reporting via mail.
+
+Example
+-------
+
+protected ReportingExceptionHandler mDamageReport = new ReportingExceptionHandler(this, new ReportingExceptionHandlerSettings( "receiver@domain", "App Name Exception Report"));
+ 
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+ 
+      	// Set default exception handler and report old crash
+ 		mDamageReport.run();
+ 		Thread.setDefaultUncaughtExceptionHandler(mDamageReport);
+		...
+
+
+
+
+

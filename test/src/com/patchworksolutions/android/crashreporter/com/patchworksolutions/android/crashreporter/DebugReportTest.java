@@ -23,30 +23,30 @@ public class DebugReportTest extends ActivityInstrumentationTestCase2 <CrashRepo
     
     public void testGetDebugDescription() throws Exception {
     	String expected = ACTIVITY_PACKAGE + " generated the following exception:\n" + TEST_TEXT + "\n\n";
-    	String result = DebugReport.getDebugDescription(new TestThrowable(TEST_TEXT), getActivity());
+    	String result = DebugReportUtil.getDebugDescription(new TestThrowable(TEST_TEXT), getActivity());
     	assertTrue(result.compareTo(expected) == 0);
     }
     
     public void testGetDebugStackTrace() throws Exception {
     	String expected = "STACK_TRACE\nEND STACK_TRACE\n\n";
-    	String result = DebugReport.getDebugStackTrace(new TestThrowable(""), new DecimalFormat("#0."));
+    	String result = DebugReportUtil.getDebugStackTrace(new TestThrowable(""), new DecimalFormat("#0."));
     	assertTrue(result.compareTo(expected) == 0);
     }
     
     public void testGetDebugCause() throws Exception {
     	String expected = "CAUSE\n" + TEST_TEXT + "\n\nEND CAUSE\n\n";
-    	String result = DebugReport.getDebugCause(new TestThrowable(""), new DecimalFormat("#0."));
+    	String result = DebugReportUtil.getDebugCause(new TestThrowable(""), new DecimalFormat("#0."));
     	assertTrue(result.compareTo(expected) == 0);
     }
     
     public void testGetDebugMD5Hash() throws Exception {
     	String expected = "MD5_HASH\n" + EMPTY_STRING_MD5_HASH + "\nEND MD5_HASH\n\n";
-    	String result = DebugReport.getDebugMD5Hash(new TestThrowable(""));
+    	String result = DebugReportUtil.getDebugMD5Hash(new TestThrowable(""));
     	assertTrue(result.compareToIgnoreCase(expected) == 0);
     }
     
     public void testGetDebugEnvironment() throws Exception {
-    	String result = DebugReport.getDebugEnvironment(getActivity());
+    	String result = DebugReportUtil.getDebugEnvironment(getActivity());
     	//System.out.println(result);
     	//TODO: verify!
     }
