@@ -1,29 +1,17 @@
 package com.patchworksolutions.android.crashreporter;
 
-
 /**
- * 
  * 
  */
 public class MessageTemplate {
 
+    private String msgSubjectTag = "Exception Report"; 	// "app title + this tag" 
+    													// = email subject
     
-
-    private String msgSubjectTag = "Exception Report"; // "app title + this tag"
-                                                                        // =
-                                                                        // email
-                                                                        // subject
-    private String msgSentTo = ""; // email
-                                                                        // will
-                                                                        // be
-                                                                        // sent
-                                                                        // to
-                                                                        // this
-                                                                        // account
+    private String msgSentTo = "";
  
     private byte[] secretDesKeyData = null;
     
-    // the following may be something you wish to consider localizing
     private String msgBody = "Please help by sending this email. "
             + "No personal information is being sent (you can check by reading the rest of the email).";
     
@@ -55,11 +43,6 @@ public class MessageTemplate {
         return msgBody;
     }
 
-    // Note the following bytes are not realistic secret key data 
-    // bytes but are simply supplied as an illustration of using data
-    // bytes (key material) you already have to build a DESKeySpec.
-    // byte[] desKeyData = { (byte)0x01, (byte)0x02, (byte)0x03, 
-    //    (byte)0x04, (byte)0x05, (byte)0x06, (byte)0x07, (byte)0x08 };
 	public byte[] getSecretDesKeyData() {
 		return secretDesKeyData;
 	}

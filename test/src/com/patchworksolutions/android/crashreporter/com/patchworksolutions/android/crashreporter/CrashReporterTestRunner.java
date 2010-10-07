@@ -12,7 +12,7 @@ public class CrashReporterTestRunner extends InstrumentationTestRunner {
         InstrumentationTestSuite suite = new InstrumentationTestSuite(this);
 
         suite.addTestSuite(DesEncrypterTest.class);
-        suite.addTestSuite(DebugReportTest.class);
+        suite.addTestSuite(DebugReportUtilTest.class);
         return suite;
     }
 
